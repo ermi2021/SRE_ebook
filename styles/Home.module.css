@@ -1,24 +1,59 @@
-.container {
-  padding: 0 2rem;
+.containerNight {
+  padding: 0 0rem;
+  background-color: #1E1C3E;
+}
+.containerLight {
+  padding: 0 0rem;
+  background-color: #f6f6f6;
 }
 
 .main {
-  min-height: 100vh;
-  padding: 4rem 0;
-  flex: 1;
+  min-height: 120vh;
+  /* padding: 4rem 0; */
+  /* flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: center; */
 }
 
 .footer {
   display: flex;
   flex: 1;
   padding: 2rem 0;
-  border-top: 1px solid #eaeaea;
+  border-top: 1px solid #2c2525;
   justify-content: center;
   align-items: center;
+}
+
+.mainContainer {
+  min-height: 100vh; 
+  /* margin-top: 4rem;  */
+  background-color: #1E1C3E;
+}
+
+.mainGrid {
+  min-height: 100vh; 
+  padding-top: 6rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.uploadContainer {
+ height: 90vh;
+}
+
+.editContainer {
+  height: 90vh;
+  /* background-color: rgb(253, 163, 53); */
+  border-left: 1px white solid;
+  padding-right: 1rem;
+}
+
+.effectContainer {
+  height: 90vh;
+  /* background-color: rgb(122, 77, 21); */
+  border-left: 1px white solid;
 }
 
 .footer a {
@@ -106,6 +141,10 @@
 .logo {
   height: 1em;
   margin-left: 0.5rem;
+}
+
+.navbarBox {
+  background-color: #5F5B8F;
 }
 
 @media (max-width: 600px) {
