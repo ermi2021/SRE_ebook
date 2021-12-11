@@ -1,7 +1,6 @@
 import React, { ChangeEventHandler, useState, useEffect } from "react";
 
 import * as Helpers from "./helpers";
-import { CustomImage } from "./custom-image";
 import styles from "../styles/App.module.css";
 import Head from 'next/head';
 import Image from "next/image";
@@ -12,7 +11,6 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Grid from "@mui/material/Grid";
-import { Blob } from 'react-blob';
 import jsPDF from "jspdf";
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -22,9 +20,8 @@ import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch, { SwitchProps } from '@mui/material/Switch';
-import 'react-dropzone-uploader/dist/styles.css'
-import Dropzone from 'react-dropzone-uploader'
 import ImageList from '@mui/material/ImageList';
+import ListSubheader from '@mui/material/ListSubheader';
 import ImageListItem from '@mui/material/ImageListItem';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import Stack from '@mui/material/Stack';
@@ -34,6 +31,13 @@ import ReactTypingEffect from 'react-typing-effect';
 import SaveIcon from '@mui/icons-material/Save';
 import { makeStyles } from "@material-ui/core/styles";
 import { styled } from '@mui/material/styles';
+import useSWR from "swr";
+import ImageListItemBar from '@mui/material/ImageListItemBar';
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import Badge from '@mui/material/Badge';
+
+import Font, { Text } from 'react-font'
+
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -43,12 +47,11 @@ const useStyles = makeStyles(theme => ({
   textField: {
     marginLeft: theme.spacing(1),
     marginRight: theme.spacing(1),
-    //width: "25ch",
-    color: "white",
+    color: "black",
     borderColor: "white"
   },
   textFieldInput: {
-    color: "white",
+    color: "black",
     borderColor: "white",
     fontWeight: "bold"
   },
@@ -59,7 +62,7 @@ const useStyles = makeStyles(theme => ({
 
 
 function App() {
-  const [uploadedImages, setUploadedImages] = React.useState<CustomImage[]>([]);
+  const [uploadedImages, setUploadedImages] = React.useState([]);
   const [pdfBlob, setPdf] = useState(new jsPDF());
   const [pdfUrl, setPdfUrl] = useState(new URL("https://fetzer.org/sites/default/files/images/stories/pdf/selfmeasures/Different_Types_of_Love_PASSIONATE.pdf"));
   const [layout, setLayout] = React.useState('p');
@@ -72,53 +75,11 @@ function App() {
   const [titlePosition, setTitlePosition] = React.useState({ left: 40, top: 140 });
   const [preview, setPreview] = React.useState(false);
   const [nightMode, setNightMode] = React.useState(false);
+  const fetcher = (url: any) => fetch(url).then((res) => res.json());
+  const [pdfImage, setPdfImage] = useState([]);
+  let { data } = useSWR('/api/readfiles', fetcher);
+  const [orderdImg, setOrderdImage] = useState([]);
 
-  const MaterialUISwitch = styled(Switch)(({ theme }) => ({
-    width: 62,
-    height: 34,
-    padding: 7,
-    '& .MuiSwitch-switchBase': {
-      margin: 1,
-      padding: 0,
-      transform: 'translateX(6px)',
-      '&.Mui-checked': {
-        color: '#fff',
-        transform: 'translateX(22px)',
-        '& .MuiSwitch-thumb:before': {
-          backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
-            '#fff',
-          )}" d="M4.2 2.5l-.7 1.8-1.8.7 1.8.7.7 1.8.6-1.8L6.7 5l-1.9-.7-.6-1.8zm15 8.3a6.7 6.7 0 11-6.6-6.6 5.8 5.8 0 006.6 6.6z"/></svg>')`,
-        },
-        '& + .MuiSwitch-track': {
-          opacity: 1,
-          backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be',
-        },
-      },
-    },
-    '& .MuiSwitch-thumb': {
-      backgroundColor: theme.palette.mode === 'dark' ? '#003892' : '#001e3c',
-      width: 32,
-      height: 32,
-      '&:before': {
-        content: "''",
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        left: 0,
-        top: 0,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
-          '#fff',
-        )}" d="M9.305 1.667V3.75h1.389V1.667h-1.39zm-4.707 1.95l-.982.982L5.09 6.072l.982-.982-1.473-1.473zm10.802 0L13.927 5.09l.982.982 1.473-1.473-.982-.982zM10 5.139a4.872 4.872 0 00-4.862 4.86A4.872 4.872 0 0010 14.862 4.872 4.872 0 0014.86 10 4.872 4.872 0 0010 5.139zm0 1.389A3.462 3.462 0 0113.471 10a3.462 3.462 0 01-3.473 3.472A3.462 3.462 0 016.527 10 3.462 3.462 0 0110 6.528zM1.665 9.305v1.39h2.083v-1.39H1.666zm14.583 0v1.39h2.084v-1.39h-2.084zM5.09 13.928L3.616 15.4l.982.982 1.473-1.473-.982-.982zm9.82 0l-.982.982 1.473 1.473.982-.982-1.473-1.473zM9.305 16.25v2.083h1.389V16.25h-1.39z"/></svg>')`,
-      },
-    },
-    '& .MuiSwitch-track': {
-      opacity: 1,
-      backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be',
-      borderRadius: 20 / 2,
-    },
-  }));
 
   const classes = useStyles();
 
@@ -196,27 +157,62 @@ function App() {
     console.log(status, meta)
   }
 
+  const reorder = (list: any, startIndex: any, endIndex: any) => {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
 
+    return result;
+  };
+
+  const getListStyle = isDraggingOver => ({
+    background: isDraggingOver ? "#f6f6f6" : "transparent",
+    padding: 8,
+    width: 250,
+    marginLeft: 110,
+    paddingLeft: 20,
+    paddingRight: 20,
+
+  });
+
+  const onDragEnd = (result: any) => {
+    // dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+
+    const items = reorder(
+      data,
+      result.source.index,
+      result.destination.index
+    );
+    data = items;
+    setUploadedImages(data);
+    // return data;
+  }
+
+  const removeItem = (index) => {
+    const removed = data.splice(index, 1);
+    setUploadedImages(removed);
+  }
 
   useEffect(() => {
     setPdf(Helpers.generatePdfFromImages(uploadedImages, width, height, layout, pageSize, addFirstPage, pageTitle, fontSize, titlePosition));
-  }, [uploadedImages, layout, pageSize, width, height, addFirstPage, pageTitle, fontSize, titlePosition])
+  }, [uploadedImages, layout, pageSize, width, height, addFirstPage, pageTitle, fontSize, titlePosition, data])
 
   useEffect(() => {
     setPdfUrl(pdfBlob.output("bloburl"));
   }, [pdfBlob])
 
-  const handleImageUpload = React.useCallback<
-    ChangeEventHandler<HTMLInputElement>
-  >(
-    (event) => {
-      const fileList = event.target.files;
-      const fileArray = fileList ? Array.from(fileList) : [];
-      const fileToImagePromises = fileArray.map(Helpers.fileToImageURL);
-      Promise.all(fileToImagePromises).then(setUploadedImages);
-    },
-    [setUploadedImages]
-  );
+  useEffect(() => {
+    if (data) {
+      // console.log("from the ueEffect ", data);
+      setUploadedImages(data);
+
+    } else {
+      console.log("from the ueEffect ", data);
+    }
+  }, [data]);
 
 
   const cleanUpUploadedImages = React.useCallback(() => {
@@ -252,19 +248,11 @@ function App() {
                     sx={{ mr: 2 }}
                   ></IconButton>
                   <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                    <Image
-                      src="/../public/sre_icon.png"
-                      width="100"
-                      height="60" />
+                    <img
+                      src="https://sreglobal.com/images/logo.png"
+                    />
                   </Typography>
 
-                  <FormGroup>
-                    <FormControlLabel
-                      control={<MaterialUISwitch sx={{ m: 1 }} checked={nightMode} onChange={handleNightMode} />}
-                      label=""
-                    />
-
-                  </FormGroup>
                 </Toolbar>
               </AppBar>
             ) : (
@@ -278,17 +266,12 @@ function App() {
                     sx={{ mr: 2 }}
                   ></IconButton>
                   <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                    <Image
-                      src="/../public/sre_icon.png"
-                      width="100"
-                      height="60" />
-                  </Typography>
-                  <FormGroup>
-                    <FormControlLabel
-                      control={<MaterialUISwitch sx={{ m: 1 }} checked={nightMode} onChange={handleNightMode} />}
-                      label=""
+                    <img
+                      src="https://sreglobal.com/images/logo.png"
+
                     />
-                  </FormGroup>
+                  </Typography>
+
                 </Toolbar>
               </AppBar>
             )}
@@ -299,38 +282,76 @@ function App() {
                 <Stack direction="row" alignItems="left" sx={{
                   marginY: 4
                 }} spacing={2}>
-                  <label htmlFor="file-input">
-                    <input
-                      id="file-input"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ display: "none" }}
-                      multiple
-                    />
-                    <Button variant="contained" component="span">
-                      Upload Image/s
-                    </Button>
-                    <IconButton color="primary" aria-label="upload picture" component="span">
-                      <PhotoCamera />
-                    </IconButton>
-                  </label>
+
 
                 </Stack>
                 {uploadedImages.length > 0 ? (
-                  <Box sx={{ width: 500, height: 650, overflowY: 'scroll' }} >
-                    <ImageList cols={3} gap={8}>
-                      {uploadedImages.map((image) => (
-                        <ImageListItem key={image.src} className="styles.imageListContainer">
-                          <img
-                            src={image.src}
-                            srcSet={image.src}
-                            alt="uploaded Image"
-                            loading="lazy"
-                          />
-                        </ImageListItem>
-                      ))}
-                    </ImageList>
+                  <Box sx={{ width: 500, height: 650, display: "flex", flexDirection: "column", alignContent: "center", justifyContent: "center" }} >
+                    {/* <h1>Images read from API route: </h1> */}
+                    <Typography variant="div" sx={{
+                      backgroundColor: "#f6f6f6",
+                      padding: "15px",
+
+                      boxShadow: 5,
+
+                      fontWeight: "bold"
+                    }}><Badge badgeContent={uploadedImages.length} color="secondary" sx={{
+                      marginLeft: 2,
+                      marginRight: 1,
+                      fontSize: 22,
+                      fontWeight: "bold"
+                    }}></Badge>  Images Uploaded</Typography>
+                    <Box sx={{ width: "100%", height: "100%", overflowY: 'scroll', paddingY: "20px", marginY: "20px" }} >
+                      <DragDropContext onDragEnd={onDragEnd}>
+                        <ImageList>
+                          <Droppable droppableId="droppable-1">
+                            {(provided: any, snapshot: any) => (
+                              <div ref={provided.innerRef} {...provided.droppableProps} style={getListStyle(snapshot.isDraggingOver)}>
+                                {uploadedImages.map((image: any, ind: any) => (
+                                  <Draggable key={ind} draggableId={'draggable-' + ind} index={ind} >
+                                    {(provided: any, snapshot: any) => (
+                                      <ImageListItem key={ind} className="styles.imageListContainer"
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        sx={{
+                                          marginBottom: 3
+                                        }}
+                                      >
+                                        <Image
+                                          {...provided.dragHandleProps}
+                                          {...provided.draggableProps}
+                                          src={'data:image/jpeg;base64,' + image}
+                                          alt="uploaded Image"
+                                          loading="lazy"
+                                          width="50"
+                                          height="200"
+                                        />
+                                        <ImageListItemBar
+                                          title={<Badge badgeContent={ind + 1} color="primary" sx={{
+                                            marginLeft: 2,
+                                            fontSize: 20
+                                          }}></Badge>}
+                                          position="top"
+                                          // subtitle={item.author}  
+                                          sx={{
+                                            backgroundColor: "transparent"
+                                          }}
+                                        />
+
+                                      </ImageListItem>
+                                    )}
+
+                                  </Draggable>
+                                ))}
+                                {provided.placeholder}
+                              </div>
+                            )}
+
+                          </Droppable>
+                        </ImageList>
+                      </DragDropContext>
+                    </Box>
                   </Box>
                 ) : (
                   <Box sx={{ width: 500, height: 650, display: "flex", flexDirection: "column", alignContent: "center", justifyContent: "center" }}>
@@ -344,6 +365,7 @@ function App() {
                           alignSelf: "center",
                           fontSize: 70,
                           marginBottom: 3
+
                         }} />
                         <Typography variant="h6" sx={{
                           color: 'white',
@@ -376,7 +398,7 @@ function App() {
                   </Box>
                 )}
                 {uploadedImages.length > 0 ? (
-                  <Button fullWidth variant="contained" onClick={handlePreviewChange} sx={{
+                  <Button fullWidth color="info" variant="contained" onClick={handlePreviewChange} sx={{
                     marginTop: 5,
                     width: 500
                   }} component="div" startIcon={<VisibilityIcon />}>
@@ -393,23 +415,25 @@ function App() {
                 {preview == true ? (
                   <iframe name="someFrame" src={pdfUrl.toString()} id="someFrame" className={styles.ifream}></iframe>
                 ) : (
-                  <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignContent: "center", justifyContent: "center" }}>
+                  <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignContent: "left", justifyContent: "center" }}>
                     {nightMode == true ? (
                       <>
                         <Typography variant="h4" sx={{
                           color: "white",
                           fontWeight: "bold",
                           textAlign: "center",
-                          width: "80%",
                           alignSelf: "center"
 
                         }} component="div" gutterBottom>
-                          Welcome to SRE E-BOOK MAKER
+                          WELCOME TO SRE E-BOOK MAKER
                         </Typography>
-                        <Typography variant="h3" sx={{
+
+                        <Typography variant="h2" sx={{
                           color: "white",
                           fontWeight: "bold",
-                          textAlign: "center"
+                          textAlign: "center",
+                          alignSelf: "center"
+
                         }} component="div" gutterBottom>
                           <ReactTypingEffect
                             text={["Upload Images", "Convert to PDF", "Save in PDF format"]}
@@ -417,26 +441,30 @@ function App() {
                         </Typography>
                       </>
                     ) : (
-                      <>
-                        <Typography variant="h4" sx={{
-                          color: "black",
-                          fontWeight: "bold",
-                          textAlign: "center",
-                          width: "80%",
-                          alignSelf: "center"
 
-                        }} component="div" gutterBottom>
-                          Welcome to SRE E-BOOK MAKER
-                        </Typography>
+                      <>
                         <Typography variant="h3" sx={{
                           color: "black",
                           fontWeight: "bold",
-                          textAlign: "center"
+                          textAlign: "center",
+                          alignSelf: "center"
+
+                        }} component="div" gutterBottom>
+                          WELCOME TO SRE E-BOOK MAKER
+                        </Typography>
+
+                        <Typography variant="h2" sx={{
+                          color: "black",
+                          fontWeight: "bold",
+                          textAlign: "center",
+                          alignSelf: "center"
+
                         }} component="div" gutterBottom>
                           <ReactTypingEffect
                             text={["Upload Images", "Convert to PDF", "Save in PDF format"]}
                           />
                         </Typography>
+
                       </>
                     )}
                   </Box>
@@ -448,7 +476,7 @@ function App() {
                   {preview == true ? (
                     <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignContent: "center", justifyContent: "flex-start", alignSelf: "center", paddingLeft: "35px" }}>
                       <Typography variant="h6" sx={{
-                        color: "white",
+                        color: "black",
                         fontWeight: "bold",
                         textAlign: "left",
                         marginTop: 3,
@@ -460,7 +488,7 @@ function App() {
                         width: "100%",
                       }}>
                         <InputLabel id="demo-simple-select-label" sx={{
-                          color: "white"
+                          color: "black"
                         }}>Paper Size</InputLabel>
                         <Select
                           labelId="demo-simple-select-label"
@@ -486,7 +514,7 @@ function App() {
                         marginTop: 5,
                       }}>
                         <InputLabel id="demo-simple-select-label" sx={{
-                          color: "white"
+                          color: "black"
                         }} >Page Layout</InputLabel>
                         <Select
                           labelId="demo-simple-select-label"
@@ -494,7 +522,7 @@ function App() {
                           label="Page Layout"
                           onChange={handleLayoutChange}
                           sx={{
-                            color: "white"
+                            color: "black"
                           }}
                         >
                           <MenuItem value={'p'}>Portrait</MenuItem>
@@ -510,7 +538,7 @@ function App() {
                             color: "white"
                           }}>
                             <Typography variant="h6" sx={{
-                              color: "white",
+                              color: "black",
                               fontWeight: "bold",
                               textAlign: "left",
                               marginTop: 3,
@@ -551,7 +579,6 @@ function App() {
 
                           }}>
                             <TextField
-
                               id="outlined-required"
                               label="height"
                               defaultValue="297"
@@ -575,7 +602,7 @@ function App() {
                         <Grid item xs={12} sx={{
                           marginBottom: 2
                         }}>
-                          <FormControlLabel control={<Switch checked={addFirstPage} onChange={handleFirstPage} />} label="Add First Page" sx={{ color: "white", fontWeight: "bold" }} />
+                          <FormControlLabel control={<Switch checked={addFirstPage} onChange={handleFirstPage} />} label="Add First Page" sx={{ color: "black", fontWeight: "bold" }} />
                         </Grid>
                         {addFirstPage ? (
                           <Grid container spacing={2}>
@@ -627,7 +654,8 @@ function App() {
                                 marginRight: 3
                               }}>
                                 <InputLabel id="demo-simple-select-label" sx={{
-                                  color: "white"
+                                  color: "black",
+                                  fontWeight: "bold"
                                 }}>Alignment</InputLabel>
                                 <Select
                                   labelId="demo-simple-select-label"
@@ -660,9 +688,9 @@ function App() {
                       </Grid>
                       <Button fullWidth variant="contained" onClick={savePdf} sx={{
                         marginTop: 5,
-                        width: "80%"
+                        width: "100%"
                       }} component="div" startIcon={<SaveIcon />}>
-                        Save PDF
+                        Save as PDF
                       </Button>
                     </Box>
                   ) : (
@@ -681,23 +709,16 @@ function App() {
           </Box>
 
         </main>
-
         <footer className={styles.footer}>
           <Typography variant="h6" sx={{
-            color: "white",
+            color: "#2E1114",
             fontWeight: "bold",
             textAlign: "left",
-
-
           }} component="div" gutterBottom>
             Made with ❤️ by Ermiyas Zeleke
           </Typography>
-
-
-
         </footer>
       </div>
-
     </>
   );
 }

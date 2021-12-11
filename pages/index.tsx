@@ -1,26 +1,18 @@
 import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import useSWR from 'swr';
 
 
-import React, {useState, useEffect} from 'react';
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import Grid from "@mui/material/Grid";
-import { Document, Page } from 'react-pdf';
+import React from 'react';
 import dynamic from "next/dynamic";
 
-const App = dynamic(()=> import('../components/App'));
+const App = dynamic(() => import('../components/App'));
 
 const Home: NextPage = () => {
-
+  const fetcher = (url: any) => fetch(url).then((res) => res.json());
+  // const { data } = useSWR('/api/readfiles', fetcher);
   return (
-   <App/>
+    // {!data && "Loading..."}
+    <App />
   )
 }
 

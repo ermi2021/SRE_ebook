@@ -1,7 +1,7 @@
 
 import jsPDF from "jspdf";
 
-import { CustomImage } from "./custom-image";
+
 
 const A4_PAPER_DIMENSIONS = {
   width: 210,
@@ -45,23 +45,8 @@ export const imageDimensionsOnA4 = (dimensions: ImageDimension) => {
   };
 };
 
-export const fileToImageURL = (file: File): Promise<CustomImage> => {
-  return new Promise((resolve, reject) => {
-    const image = new CustomImage(file.type);
 
-    image.onload = () => {
-      resolve(image);
-    };
-
-    image.onerror = () => {
-      reject(new Error("Failed to convert File to Image"));
-    };
-
-    image.src = URL.createObjectURL(file);
-  });
-};
-
-export const generatePdfFromImages = (images: CustomImage[], width: number, height: number, porientation: any = 'p', format: any = 'a4', addFirstPage: boolean, fpTitle: any, fSize: any, tPosition: any) => {
+export const generatePdfFromImages = (images: any[], width: number, height: number, porientation: any = 'p', format: any = 'a4', addFirstPage: boolean, fpTitle: any, fSize: any, tPosition: any) => {
   const doc = new jsPDF({
     orientation: porientation,
     unit: 'mm',
@@ -79,15 +64,17 @@ export const generatePdfFromImages = (images: CustomImage[], width: number, heig
   }
 
   images.forEach((image) => {
+    var imgData = 'data:image/jpeg;base64,' + image;
+    console.log("converted image", imgData);
     const imageDimensions = imageDimensionsOnA4({
       width: width,
       height: height,
     });
-
+    console.log("image info" + imgData);
     doc.addPage();
     doc.addImage(
-      image.src,
-      image.imageType,
+      imgData,
+      "JPEG",
       (A4_PAPER_DIMENSIONS.width - imageDimensions.width) / 2,
       (A4_PAPER_DIMENSIONS.height - imageDimensions.height) / 2,
       imageDimensions.width,

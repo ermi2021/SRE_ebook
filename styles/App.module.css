@@ -1,14 +1,16 @@
 .ifream {
-  height:100%;
-  width:99%;
+  height:92%;
+  width:92%;
+  align-self: center;
+  margin-left: 2rem;
 }
 .containerNight {
   padding: 0 0rem;
-  background-color: #1E1C3E;
+  background-color: #501B14;
 }
 .containerLight {
   padding: 0 0rem;
-  background-color: #f6f6f6;
+  background-color: #EDC7B7;
 }
 .images_container {
     display: flex;
@@ -151,7 +153,7 @@
 .editContainer {
   height: 90vh;
   /* background-color: rgb(253, 163, 53); */
-  border-left: 1px white solid;
+ 
   /* padding-right: 1rem; */
 }
 .effectContainer {
@@ -259,11 +261,11 @@
 }
 
 .navbarBoxNight {
-  background-color: #5F5B8F;
+  background-color: #2E1114;
   padding-top: 1rem;
 }
 .navbarBoxLight {
-  background-color: #4630eb;
+  background-color: #AC3B61;
   padding-top: 1rem;
 }
 @media (max-width: 600px) {
